@@ -1,4 +1,4 @@
-ñ/**
+/**
  * controllers/authController.js
  * -----------------------------------------------------------------------
  * Controladores HTTP para autenticación. Reemplazan las rutas
