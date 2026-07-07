@@ -4,6 +4,7 @@
  * Implementa exactamente los endpoints que definiste:
  *   GET    /notifications
  *   GET    /notifications/unread
+ *   POST   /notifications
  *   PUT    /notifications/:id/read
  *   PUT    /notifications/read-all
  *   DELETE /notifications/:id
@@ -29,6 +30,27 @@ async function listUnread(req, res, next) {
     const notifications = await notificationService.listUnreadNotifications(req.user.id);
     const unreadCount = await notificationService.countUnread(req.user.id);
     res.json({ notifications, unreadCount });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function create(req, res, next) {
+  try {
+    const { title, message, type } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Faltan title o message.' });
+    }
+
+    const notification = await notificationService.createNotification({
+      userId: req.user.id,
+      title,
+      message,
+      type, // opcional — el service ya cae a 'general' si no es válido
+    });
+
+    res.status(201).json({ notification });
   } catch (error) {
     next(error);
   }
@@ -65,4 +87,4 @@ async function remove(req, res, next) {
   }
 }
 
-module.exports = { list, listUnread, markRead, markAllRead, remove };
+module.exports = { list, listUnread, create, markRead, markAllRead, remove };
