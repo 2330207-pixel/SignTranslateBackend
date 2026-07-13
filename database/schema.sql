@@ -113,3 +113,48 @@ CREATE TRIGGER trg_users_updated_at
     BEFORE UPDATE ON users
     FOR EACH ROW
     EXECUTE FUNCTION set_updated_at();
+
+-- -------------------------------------------------------------------------
+-- Tabla: dictionary_categories
+-- -------------------------------------------------------------------------
+-- Cada carpeta de video (Alfabeto, Numeros, Familia, etc.) es una fila
+-- aquí. "slug" es el identificador estable que usa el front (ej. en la
+-- URL /api/dictionary/categories/:slug/videos); "name" es lo que se
+-- muestra en pantalla. icon_key es un identificador libre que tu Compose
+-- UI mapea a un ícono local (Tt, #, paleta, etc., como en el mockup).
+CREATE TABLE IF NOT EXISTS dictionary_categories (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug           VARCHAR(100) NOT NULL UNIQUE,
+    name           VARCHAR(150) NOT NULL,
+    icon_key       VARCHAR(50),
+    display_order  INT NOT NULL DEFAULT 0,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_dictionary_categories_slug ON dictionary_categories (slug);
+
+-- -------------------------------------------------------------------------
+-- Tabla: dictionary_videos
+-- -------------------------------------------------------------------------
+-- video_url: URL pública de Cloudinary (o el proveedor que uses), lista
+-- para pasarle directo a un reproductor (ExoPlayer/Media3).
+-- storage_public_id: el public_id que Cloudinary asigna al archivo; lo
+-- guardamos para poder borrar/reemplazar el video después sin tener que
+-- volver a subir todo.
+CREATE TABLE IF NOT EXISTS dictionary_videos (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    category_id         UUID NOT NULL REFERENCES dictionary_categories(id) ON DELETE CASCADE,
+    word                VARCHAR(150) NOT NULL,
+    video_url           TEXT NOT NULL,
+    thumbnail_url       TEXT,
+    storage_public_id   TEXT,
+    display_order       INT NOT NULL DEFAULT 0,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_dictionary_videos_category ON dictionary_videos (category_id);
+
+-- Evita duplicados si vuelves a correr el script de subida masiva:
+-- la misma palabra dentro de la misma categoría solo puede existir una vez.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_dictionary_videos_category_word
+    ON dictionary_videos (category_id, word);
