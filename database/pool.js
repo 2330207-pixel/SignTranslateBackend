@@ -26,11 +26,17 @@ if (!process.env.DATABASE_URL) {
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Railway (y prácticamente cualquier Postgres remoto) exige SSL para
+// conexiones externas — sin importar si el proceso que se conecta corre
+// en Railway o en tu laptop. Antes esto se decidía con NODE_ENV, lo cual
+// rompía scripts locales (como uploadDictionaryVideos.js) que sí se
+// conectan a la base remota pero con NODE_ENV=development.
+// Detectamos "remoto" viendo si la URL NO apunta a localhost/127.0.0.1.
+const isLocalDb = /localhost|127\.0\.0\.1/.test(process.env.DATABASE_URL);
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Railway requiere SSL. En local (por ejemplo con un Postgres en Docker)
-  // normalmente no lo necesitas, por eso lo condicionamos.
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
+  ssl: isLocalDb ? false : { rejectUnauthorized: false },
   max: 10, // máximo de conexiones simultáneas en el pool
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
