@@ -163,4 +163,23 @@ async function me(req, res) {
   res.json({ user: req.user });
 }
 
-module.exports = { register, login, googleLogin, refresh, logout, me };
+async function updateProfile(req, res, next) {
+  try {
+    const { name, email, phone, birthDate } = req.body;
+    const userId = req.user.id; // Obtenido por el middleware requireAuth
+
+    // Llamamos al servicio que ya tenías creado
+    const updatedUser = await userService.updateProfile(userId, {
+      name, email, phone, birthDate
+    });
+
+    res.json({
+      message: 'Perfil actualizado exitosamente.',
+      user: toPublicUser(updatedUser)
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { register, login, googleLogin, refresh, logout, me, updateProfile };
