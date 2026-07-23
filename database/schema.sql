@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash  VARCHAR(255),
     google_id      VARCHAR(255)  UNIQUE,
     avatar_id      VARCHAR(100),
+    phone          VARCHAR(20),
+    birth_date     VARCHAR(20),
     fcm_token      VARCHAR(255),
     created_at     TIMESTAMPTZ   NOT NULL DEFAULT now(),
     updated_at     TIMESTAMPTZ   NOT NULL DEFAULT now(),

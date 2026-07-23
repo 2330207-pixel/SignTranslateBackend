@@ -22,6 +22,26 @@ async function updateAvatar(req, res, next) {
   }
 }
 
+async function updateProfile(req, res, next) {
+  try {
+    const { name, email, phone, birthDate } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ error: 'El nombre y el email son obligatorios.' });
+    }
+
+    const user = await userService.updateProfile(req.user.id, {
+      name,
+      email,
+      phone,
+      birthDate,
+    });
+
+    res.json({ user });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function updateFcmToken(req, res, next) {
   try {
     const { fcmToken } = req.body;
@@ -58,4 +78,10 @@ async function listTranslations(req, res, next) {
   }
 }
 
-module.exports = { updateAvatar, updateFcmToken, saveTranslation, listTranslations };
+module.exports = {
+  updateAvatar,
+  updateProfile,
+  updateFcmToken,
+  saveTranslation,
+  listTranslations
+};

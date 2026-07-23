@@ -11,7 +11,7 @@ const { query } = require('../../database/pool');
 
 // Nunca devolvemos password_hash al cliente. Este es el set de columnas
 // "seguras" que sí se pueden exponer en las respuestas de la API.
-const SAFE_COLUMNS = 'id, name, email, avatar_id, google_id, created_at, updated_at';
+const SAFE_COLUMNS = 'id, name, email, avatar_id, phone, birth_date, google_id, created_at, updated_at';
 
 async function findUserByEmail(email) {
   const { rows } = await query('SELECT * FROM users WHERE email = $1', [email.toLowerCase().trim()]);
@@ -54,6 +54,17 @@ async function updateAvatar(userId, avatarId) {
   return rows[0];
 }
 
+async function updateProfile(userId, { name, email, phone, birthDate }) {
+  const { rows } = await query(
+    `UPDATE users
+     SET name = $1, email = $2, phone = $3, birth_date = $4
+     WHERE id = $5
+     RETURNING ${SAFE_COLUMNS}`,
+    [name.trim(), email.toLowerCase().trim(), phone, birthDate, userId]
+  );
+  return rows[0];
+}
+
 async function updateFcmToken(userId, fcmToken) {
   await query('UPDATE users SET fcm_token = $1 WHERE id = $2', [fcmToken, userId]);
 }
@@ -65,5 +76,6 @@ module.exports = {
   createUser,
   linkGoogleIdToUser,
   updateAvatar,
+  updateProfile,
   updateFcmToken,
 };
