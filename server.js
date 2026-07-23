@@ -9,7 +9,7 @@
  *  - El puerto y demás configuración vienen de variables de entorno
  *    (src/config/env.js), no están hardcodeados.
  *  - Las rutas están organizadas por dominio (auth, users,
- *    notifications) en lugar de vivir todas en este archivo.
+ *    notifications, dictionary) en lugar de vivir todas en este archivo.
  *  - Se agrega un manejador global de errores y de rutas no encontradas.
  * -----------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@ const { notFoundHandler, errorHandler } = require('./src/middleware/errorHandler
 const authRoutes = require('./src/routes/authRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
+const dictionaryRoutes = require('./src/routes/dictionaryRoutes');
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', env: env.nodeEnv }));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/dictionary', dictionaryRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
