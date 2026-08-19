@@ -6,21 +6,22 @@
  */
 
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 const env = require('../config/env');
 
+// Forzar a Node.js a preferir IPv4 para evitar errores ENETUNREACH en Railway
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 const transporter = nodemailer.createTransport({
-  host: env.smtp.host,
-  port: env.smtp.port,
-  secure: false,
+  service: 'gmail',
   auth: {
     user: env.smtp.user,
     pass: env.smtp.pass,
   },
-  // FORZAR IPv4 para evitar el error ENETUNREACH en Railway
-  family: 4,
   tls: {
-    rejectUnauthorized: false,
-    minVersion: 'TLSv1.2'
+    rejectUnauthorized: false
   }
 });
 
@@ -52,7 +53,9 @@ async function sendRecoveryCode(to, code) {
     `,
   };
 
+  console.log(`📤 Enviando correo via SMTP (${env.smtp.host}:${env.smtp.port})...`);
   await transporter.sendMail(mailOptions);
+  console.log(`✅ Correo enviado exitosamente a ${to}`);
 }
 
 module.exports = { sendRecoveryCode };

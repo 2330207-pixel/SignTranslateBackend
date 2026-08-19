@@ -188,16 +188,22 @@ async function updateProfile(req, res, next) {
 async function forgotPassword(req, res, next) {
   try {
     const { email } = req.body;
+    console.log(`📩 Solicitud de recuperación recibida para: ${email}`);
+
     if (!email) return res.status(400).json({ error: 'El correo es obligatorio.' });
 
     const user = await userService.findUserByEmail(email);
 
-    // Si el usuario existe y TIENE password_hash (no es solo Google)
-    if (user && user.password_hash) {
+    if (!user) {
+      console.log(`ℹ️  El correo ${email} no existe en la base de datos.`);
+    } else if (!user.password_hash) {
+      console.log(`ℹ️  El usuario ${email} es una cuenta de Google (sin contraseña).`);
+    } else {
       try {
         const code = await passwordResetService.createResetToken(user.id);
+        console.log(`🔑 Token generado para ${email}. Iniciando envío de correo...`);
 
-        // Enviamos el correo SIN el await, para que la respuesta sea inmediata
+        // Enviamos el correo en segundo plano
         emailService.sendRecoveryCode(user.email, code).catch((err) => {
           console.error(`❌ Error enviando correo a ${email}:`, err.message);
         });
@@ -206,7 +212,7 @@ async function forgotPassword(req, res, next) {
       }
     }
 
-    // Respuesta genérica siempre, por seguridad y según requerimiento.
+    // Respuesta genérica siempre
     res.json({
       message: 'Si el correo está registrado, recibirás un código de recuperación.',
     });
