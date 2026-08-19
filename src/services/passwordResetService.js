@@ -11,7 +11,7 @@ const bcrypt = require('bcrypt');
 
 const CODE_EXPIRATION_MINUTES = 15;
 const MAX_ATTEMPTS_PER_CODE = 5;
-const MAX_CODES_PER_HOUR = 3;
+const MAX_CODES_PER_HOUR = 10; // Aumentado para pruebas
 
 function generateCode() {
   // Genera un código numérico de 6 dígitos

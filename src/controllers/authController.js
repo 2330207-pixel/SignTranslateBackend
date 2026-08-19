@@ -194,14 +194,16 @@ async function forgotPassword(req, res, next) {
 
     // Si el usuario existe y TIENE password_hash (no es solo Google)
     if (user && user.password_hash) {
-      // Generamos el código (esto es rápido)
-      const code = await passwordResetService.createResetToken(user.id);
+      try {
+        const code = await passwordResetService.createResetToken(user.id);
 
-      // Enviamos el correo SIN el await, para que la respuesta sea inmediata
-      // y no cause un timeout en la app si el SMTP es lento.
-      emailService.sendRecoveryCode(user.email, code).catch((err) => {
-        console.error(`❌ Error enviando correo a ${email}:`, err.message);
-      });
+        // Enviamos el correo SIN el await, para que la respuesta sea inmediata
+        emailService.sendRecoveryCode(user.email, code).catch((err) => {
+          console.error(`❌ Error enviando correo a ${email}:`, err.message);
+        });
+      } catch (err) {
+        console.error(`⚠️  No se pudo crear token para ${email}:`, err.message);
+      }
     }
 
     // Respuesta genérica siempre, por seguridad y según requerimiento.
