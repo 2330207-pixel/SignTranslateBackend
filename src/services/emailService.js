@@ -11,14 +11,16 @@ const env = require('../config/env');
 const transporter = nodemailer.createTransport({
   host: env.smtp.host,
   port: env.smtp.port,
-  secure: false, // false para puerto 587
+  secure: false,
   auth: {
     user: env.smtp.user,
     pass: env.smtp.pass,
   },
+  // FORZAR IPv4 para evitar el error ENETUNREACH en Railway
+  family: 4,
   tls: {
-    ciphers: 'SSLv3',
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    minVersion: 'TLSv1.2'
   }
 });
 
