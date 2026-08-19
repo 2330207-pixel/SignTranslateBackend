@@ -272,17 +272,17 @@ async function resetPassword(req, res, next) {
 
 async function updateFacial(req, res, next) {
   try {
-    const { facialVector } = req.body;
+    const { facialData } = req.body;
     console.log(`👤 Intento de registro facial para usuario: ${req.user.id}`);
 
-    if (!facialVector) {
-      console.warn('⚠️ No se recibió facialVector en el body.');
+    if (!facialData) {
+      console.warn('⚠️ No se recibió facialData en el body.');
       return res.status(400).json({ error: 'Datos faciales requeridos.' });
     }
 
     // Intentamos cifrar
     console.log('🔐 Cifrando datos biométricos...');
-    const encryptedData = encrypt(JSON.stringify(facialVector));
+    const encryptedData = encrypt(JSON.stringify(facialData));
 
     // Guardamos en DB
     await userService.updateFacialData(req.user.id, encryptedData);
@@ -297,8 +297,8 @@ async function updateFacial(req, res, next) {
 
 async function verifyFacial(req, res, next) {
   try {
-    const { email, facialVector } = req.body;
-    if (!email || !facialVector) return res.status(400).json({ error: 'Email y datos faciales requeridos.' });
+    const { email, facialData } = req.body;
+    if (!email || !facialData) return res.status(400).json({ error: 'Email y datos faciales requeridos.' });
 
     const user = await userService.findUserByEmail(email);
     if (!user || !user.facial_data) {
@@ -313,7 +313,7 @@ async function verifyFacial(req, res, next) {
      * En producción usaríamos distancia euclidiana.
      * Aquí validamos que el vector recibido tenga la misma estructura.
      */
-    if (Array.isArray(facialVector) && facialVector.length === savedVector.length) {
+    if (Array.isArray(facialData) && facialData.length === savedVector.length) {
       // Generamos un resetToken para permitir el cambio de contraseña
       const { tokenId } = await passwordResetService.createResetToken(user.id);
 
