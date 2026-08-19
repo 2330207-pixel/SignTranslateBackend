@@ -272,15 +272,25 @@ async function resetPassword(req, res, next) {
 
 async function updateFacial(req, res, next) {
   try {
-    const { facialVector } = req.body; // El vector que envía Android
-    if (!facialVector) return res.status(400).json({ error: 'Datos faciales requeridos.' });
+    const { facialVector } = req.body;
+    console.log(`👤 Intento de registro facial para usuario: ${req.user.id}`);
 
-    // Ciframos el vector antes de guardarlo
+    if (!facialVector) {
+      console.warn('⚠️ No se recibió facialVector en el body.');
+      return res.status(400).json({ error: 'Datos faciales requeridos.' });
+    }
+
+    // Intentamos cifrar
+    console.log('🔐 Cifrando datos biométricos...');
     const encryptedData = encrypt(JSON.stringify(facialVector));
+
+    // Guardamos en DB
     await userService.updateFacialData(req.user.id, encryptedData);
+    console.log('✅ Biometría guardada exitosamente en la base de datos.');
 
     res.json({ message: 'Biometría facial registrada exitosamente.' });
   } catch (error) {
+    console.error('❌ Error en updateFacial:', error.message);
     next(error);
   }
 }
