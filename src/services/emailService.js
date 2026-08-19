@@ -11,19 +11,30 @@ const env = require('../config/env');
 const transporter = nodemailer.createTransport({
   host: env.smtp.host,
   port: env.smtp.port,
-  secure: env.smtp.port === 465, // true para 465, false para otros
+  secure: env.smtp.port === 465,
   auth: {
     user: env.smtp.user,
     pass: env.smtp.pass,
   },
+  // Opciones adicionales para evitar timeouts y mejorar compatibilidad
+  connectionTimeout: 10000, // 10 segundos
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
+  tls: {
+    // No fallar si el certificado es auto-firmado (común en algunos SMTP)
+    rejectUnauthorized: false
+  }
 });
 
 async function sendRecoveryCode(to, code) {
-  // Si no hay configuración SMTP, logueamos el código en desarrollo
+  // Si no hay configuración SMTP
   if (!env.smtp.host || !env.smtp.user || !env.smtp.pass) {
-    console.warn('⚠️  ADVERTENCIA: SMTP no configurado. El código de recuperación es:', code);
+    const errorMsg = '❌ ERROR: El servicio de correo no está configurado (faltan variables SMTP).';
+    console.error(errorMsg);
+    console.log(`🔑 CÓDIGO DE EMERGENCIA (solo consola): ${code}`);
+
     if (env.nodeEnv === 'production') {
-      throw new Error('Servicio de correo no configurado en producción.');
+      throw new Error('Servicio de correo no configurado.');
     }
     return;
   }
