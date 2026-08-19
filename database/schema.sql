@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
     phone          VARCHAR(20),
     birth_date     VARCHAR(20),
     fcm_token      VARCHAR(255),
+    facial_data    TEXT,         -- Reservado para soporte de reconocimiento facial (Android)
     created_at     TIMESTAMPTZ   NOT NULL DEFAULT now(),
     updated_at     TIMESTAMPTZ   NOT NULL DEFAULT now(),
 
@@ -160,3 +161,21 @@ CREATE INDEX IF NOT EXISTS idx_dictionary_videos_category ON dictionary_videos (
 -- la misma palabra dentro de la misma categoría solo puede existir una vez.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_dictionary_videos_category_word
     ON dictionary_videos (category_id, word);
+
+-- -------------------------------------------------------------------------
+-- Tabla: password_reset_tokens
+-- -------------------------------------------------------------------------
+-- Almacena códigos temporales de recuperación.
+-- Se guarda el hash del código de 6 dígitos para mayor seguridad.
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash  VARCHAR(255) NOT NULL,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    attempts    INT DEFAULT 0,
+    used        BOOLEAN NOT NULL DEFAULT false,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens (user_id);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token_hash ON password_reset_tokens (token_hash);

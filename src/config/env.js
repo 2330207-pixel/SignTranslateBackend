@@ -28,4 +28,16 @@ module.exports = {
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET,
   googleClientId: process.env.GOOGLE_CLIENT_ID || null,
   corsOrigin: process.env.CORS_ORIGIN || '*',
+
+  // Biometría (AES-256-GCM)
+  facialEncryptionKey: process.env.FACIAL_ENCRYPTION_KEY,
+
+  // SMTP Config para recuperación de contraseña
+  smtp: {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    from: process.env.MAIL_FROM || 'SignTranslate <no-reply@signtranslate.com>',
+  },
 };

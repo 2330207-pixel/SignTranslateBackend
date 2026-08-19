@@ -69,6 +69,19 @@ async function updateFcmToken(userId, fcmToken) {
   await query('UPDATE users SET fcm_token = $1 WHERE id = $2', [fcmToken, userId]);
 }
 
+async function updatePassword(userId, passwordHash) {
+  await query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, userId]);
+}
+
+async function updateFacialData(userId, encryptedFacialData) {
+  await query('UPDATE users SET facial_data = $1 WHERE id = $2', [encryptedFacialData, userId]);
+}
+
+async function getFacialData(userId) {
+  const { rows } = await query('SELECT facial_data FROM users WHERE id = $1', [userId]);
+  return rows[0]?.facial_data || null;
+}
+
 module.exports = {
   findUserByEmail,
   findUserById,
@@ -78,4 +91,7 @@ module.exports = {
   updateAvatar,
   updateProfile,
   updateFcmToken,
+  updatePassword,
+  updateFacialData,
+  getFacialData,
 };

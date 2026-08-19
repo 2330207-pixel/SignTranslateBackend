@@ -12,4 +12,9 @@ router.post('/logout', authController.logout);
 router.get('/me', requireAuth, authController.me);
 router.put('/update-profile', requireAuth, authController.updateProfile);
 
+// Recuperación de contraseña
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/verify-reset-code', authController.verifyResetCode);
+router.post('/reset-password', authController.resetPassword);
+
 module.exports = router;

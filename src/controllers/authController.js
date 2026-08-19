@@ -7,12 +7,15 @@
  * -----------------------------------------------------------------------
  */
 
+
 const userService = require('../services/userService');
 const tokenService = require('../services/tokenService');
 const { hashPassword, verifyPassword } = require('../utils/password');
 const { signAccessToken } = require('../utils/jwt');
 const { validateRegisterInput, validateLoginInput } = require('../utils/validators');
 const { verifyGoogleIdToken } = require('../services/googleAuthService');
+const passwordResetService = require('../services/passwordResetService');
+const emailService = require('../services/emailService');
 
 function toPublicUser(user) {
   // Nunca exponemos password_hash ni fcm_token en las respuestas.
@@ -182,4 +185,91 @@ async function updateProfile(req, res, next) {
   }
 }
 
-module.exports = { register, login, googleLogin, refresh, logout, me, updateProfile };
+async function forgotPassword(req, res, next) {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'El correo es obligatorio.' });
+
+    const user = await userService.findUserByEmail(email);
+
+    // Si el usuario existe y TIENE password_hash (no es solo Google)
+    if (user && user.password_hash) {
+      try {
+        const code = await passwordResetService.createResetToken(user.id);
+        await emailService.sendRecoveryCode(user.email, code);
+      } catch (error) {
+        // Logueamos el error (puede ser rate limit o SMTP) pero no lo exponemos
+        // para mantener la respuesta genérica e impedir enumeración de usuarios.
+        console.error(`Error en forgotPassword para ${email}:`, error.message);
+      }
+    }
+
+    // Respuesta genérica siempre, por seguridad y según requerimiento.
+    res.json({
+      message: 'Si el correo está registrado, recibirás un código de recuperación.',
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function verifyResetCode(req, res, next) {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ error: 'Correo y código son obligatorios.' });
+
+    const result = await passwordResetService.verifyResetCode(email, code);
+    if (!result.valid) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({
+      message: 'Código verificado exitosamente.',
+      resetToken: result.resetTokenId, // Usamos el ID del registro como token de validación
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function resetPassword(req, res, next) {
+  try {
+    const { resetToken, newPassword } = req.body;
+    if (!resetToken || !newPassword) {
+      return res.status(400).json({ error: 'Token y nueva contraseña son obligatorios.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
+    }
+
+    const userId = await passwordResetService.getUserIdFromToken(resetToken);
+    if (!userId) {
+      return res.status(400).json({ error: 'Token inválido o expirado.' });
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+    await userService.updatePassword(userId, passwordHash);
+    await passwordResetService.useResetToken(resetToken);
+
+    // Invalida todas las sesiones anteriores (buena práctica)
+    await tokenService.revokeAllUserTokens(userId);
+
+    res.json({ message: 'Contraseña actualizada exitosamente.' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = {
+  register,
+  login,
+  googleLogin,
+  refresh,
+  logout,
+  me,
+  updateProfile,
+  forgotPassword,
+  verifyResetCode,
+  resetPassword,
+};
