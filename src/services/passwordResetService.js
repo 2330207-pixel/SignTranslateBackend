@@ -36,12 +36,12 @@ async function createResetToken(userId) {
   // Invalidamos tokens anteriores del mismo usuario
   await query('UPDATE password_reset_tokens SET used = true WHERE user_id = $1', [userId]);
 
-  await query(
-    'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+  const { rows } = await query(
+    'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3) RETURNING id',
     [userId, tokenHash, expiresAt]
   );
 
-  return code;
+  return { code, tokenId: rows[0].id };
 }
 
 async function verifyResetCode(email, code) {

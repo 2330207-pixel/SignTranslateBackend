@@ -201,7 +201,7 @@ async function forgotPassword(req, res, next) {
       console.log(`ℹ️  El usuario ${email} es una cuenta de Google (sin contraseña).`);
     } else {
       try {
-        const code = await passwordResetService.createResetToken(user.id);
+        const { code } = await passwordResetService.createResetToken(user.id);
         console.log(`🔑 Token generado para ${email}. Iniciando envío de correo...`);
 
         // Enviamos el correo en segundo plano
@@ -305,11 +305,11 @@ async function verifyFacial(req, res, next) {
      */
     if (Array.isArray(facialVector) && facialVector.length === savedVector.length) {
       // Generamos un resetToken para permitir el cambio de contraseña
-      const code = await passwordResetService.createResetToken(user.id);
+      const { tokenId } = await passwordResetService.createResetToken(user.id);
 
       res.json({
         message: 'Identidad facial verificada.',
-        resetToken: code // Usamos el mismo mecanismo que el correo
+        resetToken: tokenId // Ahora sí enviamos el UUID correcto
       });
     } else {
       res.status(401).json({ error: 'El rostro no coincide.' });
