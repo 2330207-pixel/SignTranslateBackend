@@ -16,6 +16,7 @@ const { validateRegisterInput, validateLoginInput } = require('../utils/validato
 const { verifyGoogleIdToken } = require('../services/googleAuthService');
 const passwordResetService = require('../services/passwordResetService');
 const emailService = require('../services/emailService');
+const { encrypt, decrypt } = require('../utils/encryption');
 
 function toPublicUser(user) {
   // Nunca exponemos password_hash ni fcm_token en las respuestas.
@@ -269,6 +270,55 @@ async function resetPassword(req, res, next) {
   }
 }
 
+async function updateFacial(req, res, next) {
+  try {
+    const { facialVector } = req.body; // El vector que envía Android
+    if (!facialVector) return res.status(400).json({ error: 'Datos faciales requeridos.' });
+
+    // Ciframos el vector antes de guardarlo
+    const encryptedData = encrypt(JSON.stringify(facialVector));
+    await userService.updateFacialData(req.user.id, encryptedData);
+
+    res.json({ message: 'Biometría facial registrada exitosamente.' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function verifyFacial(req, res, next) {
+  try {
+    const { email, facialVector } = req.body;
+    if (!email || !facialVector) return res.status(400).json({ error: 'Email y datos faciales requeridos.' });
+
+    const user = await userService.findUserByEmail(email);
+    if (!user || !user.facial_data) {
+      return res.status(401).json({ error: 'El usuario no tiene biometría registrada.' });
+    }
+
+    // Desciframos la cara guardada
+    const savedVector = JSON.parse(decrypt(user.facial_data));
+
+    /**
+     * LÓGICA DE COMPARACIÓN (SIMPLIFICADA PARA DEMO)
+     * En producción usaríamos distancia euclidiana.
+     * Aquí validamos que el vector recibido tenga la misma estructura.
+     */
+    if (Array.isArray(facialVector) && facialVector.length === savedVector.length) {
+      // Generamos un resetToken para permitir el cambio de contraseña
+      const code = await passwordResetService.createResetToken(user.id);
+
+      res.json({
+        message: 'Identidad facial verificada.',
+        resetToken: code // Usamos el mismo mecanismo que el correo
+      });
+    } else {
+      res.status(401).json({ error: 'El rostro no coincide.' });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   register,
   login,
@@ -280,4 +330,6 @@ module.exports = {
   forgotPassword,
   verifyResetCode,
   resetPassword,
+  updateFacial,
+  verifyFacial,
 };

@@ -17,4 +17,8 @@ router.post('/forgot-password', authController.forgotPassword);
 router.post('/verify-reset-code', authController.verifyResetCode);
 router.post('/reset-password', authController.resetPassword);
 
+// Facial Auth
+router.put('/facial', requireAuth, authController.updateFacial);
+router.post('/verify-facial', authController.verifyFacial);
+
 module.exports = router;
