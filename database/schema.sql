@@ -151,6 +151,8 @@ CREATE TABLE IF NOT EXISTS dictionary_videos (
     video_url           TEXT NOT NULL,
     thumbnail_url       TEXT,
     storage_public_id   TEXT,
+    start_fragment      NUMERIC(6,2) DEFAULT 0.0,
+    end_fragment        NUMERIC(6,2),
     display_order       INT NOT NULL DEFAULT 0,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );

@@ -40,7 +40,7 @@ async function listVideosByCategorySlug(slug) {
   if (!category) return null;
 
   const { rows } = await query(
-    `SELECT id, word, video_url, thumbnail_url, display_order, created_at
+    `SELECT id, word, video_url, thumbnail_url, start_fragment, end_fragment, display_order, created_at
      FROM dictionary_videos
      WHERE category_id = $1
      ORDER BY display_order ASC, word ASC`,
@@ -52,12 +52,23 @@ async function listVideosByCategorySlug(slug) {
 
 async function findVideoById(id) {
   const { rows } = await query(
-    `SELECT v.id, v.word, v.video_url, v.thumbnail_url, v.display_order,
+    `SELECT v.id, v.word, v.video_url, v.thumbnail_url, v.start_fragment, v.end_fragment, v.display_order,
             c.slug AS category_slug, c.name AS category_name
      FROM dictionary_videos v
      JOIN dictionary_categories c ON c.id = v.category_id
      WHERE v.id = $1`,
     [id]
+  );
+  return rows[0] || null;
+}
+
+async function searchVideoByWord(word) {
+  const { rows } = await query(
+    `SELECT video_url, start_fragment, end_fragment
+     FROM dictionary_videos
+     WHERE LOWER(TRIM(word)) = LOWER(TRIM($1))
+     LIMIT 1`,
+    [word]
   );
   return rows[0] || null;
 }
@@ -96,4 +107,5 @@ module.exports = {
   findVideoById,
   upsertCategory,
   insertVideo,
+  searchVideoByWord,
 };

@@ -41,4 +41,18 @@ async function getVideoById(req, res, next) {
   }
 }
 
-module.exports = { getCategories, getCategoryVideos, getVideoById };
+async function searchVideo(req, res, next) {
+  try {
+    const { word } = req.query;
+    if (!word) return res.status(400).json({ error: 'Falta el parámetro word.' });
+
+    const video = await dictionaryService.searchVideoByWord(word);
+    if (!video) return res.status(404).json({ error: 'Video no encontrado.' });
+
+    res.json(video);
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { getCategories, getCategoryVideos, getVideoById, searchVideo };

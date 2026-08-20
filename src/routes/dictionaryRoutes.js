@@ -10,6 +10,7 @@ const router = express.Router();
 
 router.get('/categories', dictionaryController.getCategories);
 router.get('/categories/:slug/videos', dictionaryController.getCategoryVideos);
+router.get('/search', dictionaryController.searchVideo);
 router.get('/videos/:id', dictionaryController.getVideoById);
 
 module.exports = router;
